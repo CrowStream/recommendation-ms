@@ -1,0 +1,34 @@
+### Variables de Entorno ###
+
+# support_db
+SUPPORT_DB_USER=root
+SUPPORT_DB_PASSWORD=pass
+SUPPORT_DB_URL=mongodb://root:pass@support_db:27017/
+
+
+w
+### USER ###
+
+# DATABASE
+USER_DB_HOST='user_db'
+USER_DB_PORT=5433
+USER_DB_USER='crowstream_user_ms'
+USER_DB_PASSWORD='Vv55oP@w55SQyVh'
+USER_DB_DATABASE='crowstream_user_db'
+# TOKEN SECURITY
+USER_MS_ACCESS_TOKEN_SECRET='access_secret'
+USER_MS_ACCESS_TOKEN_EXPIRATION_TIME='3600'
+USER_MS_REFRESH_TOKEN_SECRET='refresh_secret'
+USER_MS_REFRESH_TOKEN_EXPIRATION_TIME='604800'
+
+### RECOMMENDATION ###
+#DATABASE
+RECOMMENDATION_DB_HOST='recommendation_db'
+RECOMMENDATION_DB_PORT=8005
+RECOMMENDATION_DB_USER='crowstream_recommendation_ms'
+RECOMMENDATION_DB_PASSWORD='crowstream2021'
+RECOMMENDATION_DB_DATABASE='crowstream_recommendation_db'
+
+### API GATEWAY ###
+USER_MS_URL='user_ms'
+USER_MS_PORT='3000'
