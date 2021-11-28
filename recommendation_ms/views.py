@@ -11,15 +11,15 @@ from django.views.decorators.csrf import csrf_exempt
 from nimfa import Bmf
 # Create your views here.
 #Paths to serialize model and dictionaires
-model_path = "/home/sebasdeloco/Documentos/ArquiSoft/recommendation-ms/recommendation/recommendation_ms/data/model_fitted.sav"
-user_index_path = "/home/sebasdeloco/Documentos/ArquiSoft/recommendation-ms/recommendation/recommendation_ms/data/user_index.sav"
-index_user_path = "/home/sebasdeloco/Documentos/ArquiSoft/recommendation-ms/recommendation/recommendation_ms/data/index_user.sav"
-video_index_path = "/home/sebasdeloco/Documentos/ArquiSoft/recommendation-ms/recommendation/recommendation_ms/data/video_index.sav"
-index_video_path = "/home/sebasdeloco/Documentos/ArquiSoft/recommendation-ms/recommendation/recommendation_ms/data/index_video.sav"
+model_path = "./recommendation_ms/data/model_fitted.sav"
+user_index_path = "./recommendation_ms/data/user_index.sav"
+index_user_path = "./recommendation_ms/data/index_user.sav"
+video_index_path = "./recommendation_ms/data/video_index.sav"
+index_video_path = "./recommendation_ms/data/index_video.sav"
 n_features = 30
 
 def index(request):
-    return HttpResponse("Hello World xdxd this is index!")
+    return HttpResponse("Hello World xdxd this is recommendation system's index!")
 
 def two_way_dictionaries(array):
     forward = {v: i for i, v in enumerate(np.unique(array))}
@@ -93,7 +93,7 @@ def test_rate_all(request):
 
 def train_model(request):
     try:
-        data = np.genfromtxt('/home/sebasdeloco/Documentos/ArquiSoft/recommendation-ms/recommendation/recommendation_ms/data/ratings.csv', delimiter=',', skip_header=1)
+        data = np.genfromtxt('./recommendation_ms/data/ratings.csv', delimiter=',', skip_header=1)
         user_index, index_user = two_way_dictionaries(data[:, 0])
         video_index, index_video = two_way_dictionaries(data[:, 1])
         X = np.zeros((len(user_index),len(video_index)))

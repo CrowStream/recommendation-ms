@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-427gk(&gmabj-#diaifnix9(v_6kd8vjt-q8e8akut_a1rdew2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['0.0.0.0']
 
 
 # Application definition
@@ -79,10 +79,10 @@ WSGI_APPLICATION = 'recommendation.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'recommendation_db',
-        'USER': 'postgres',
-        'PASSWORD': 'SEBASdeloco12',
-        'HOST': 'localhost',
+        'NAME': 'crowstream_recommendation_db',
+        'USER': 'crowstream_recommendation_ms',
+        'PASSWORD': 'crowstream2021',
+        'HOST': 'recommendation_db',
         'PORT': '5432',
     }
 }
