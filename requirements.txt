@@ -1,6 +1,0 @@
-Django
-psycopg2-binary
-nimfa
-numpy
-djangorestframework
-matplotlib
