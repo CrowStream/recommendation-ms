@@ -82,7 +82,7 @@ DATABASES = {
         'NAME': 'crowstream_recommendation_db',
         'USER': 'crowstream_recommendation_ms',
         'PASSWORD': 'crowstream2021',
-        'HOST': 'recommendation_db',
+        'HOST': '0.0.0.0',
         'PORT': '8005',
     }
 }
