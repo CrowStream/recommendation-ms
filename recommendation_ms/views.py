@@ -1,21 +1,18 @@
 #from django.shortcuts import render
 import json
-
 import nimfa
 from django.http import HttpResponse
 import pickle
 import numpy as np
 from pathlib import Path
 from django.views.decorators.csrf import csrf_exempt
-
+from .models import User, Video
 from nimfa import Bmf
+
 # Create your views here.
 #Paths to serialize model and dictionaires
-model_path = "./recommendation_ms/data/model_fitted.sav"
-user_index_path = "./recommendation_ms/data/user_index.sav"
-index_user_path = "./recommendation_ms/data/index_user.sav"
-video_index_path = "./recommendation_ms/data/video_index.sav"
-index_video_path = "./recommendation_ms/data/index_video.sav"
+path = "./recommendation_ms/data/"
+
 n_features = 30
 
 def index(request):
@@ -26,98 +23,89 @@ def two_way_dictionaries(array):
     backward = dict(map(reversed, forward.items()))
     return forward, backward
 
-def load_files():
-    model = load_model()
-    user_index = load_user_index()
-    index_user = load_index_user()
-    video_index = load_video_index()
-    index_video = load_index_video()
-    return model, user_index, index_user, video_index, index_video
-
-
-def load_model():
-    model = pickle.load(open(model_path, 'rb'))
-    return model
-
-def load_index_video():
-    index_video = pickle.load(open(index_video_path, 'rb'))
-    return index_video
-
-def load_video_index():
-    video_index = pickle.load(open(video_index_path, 'rb'))
-    return video_index
-
-def load_index_user():
-    index_user = pickle.load(open(index_user_path, 'rb'))
-    return index_user
-
-def load_user_index():
-    user_index = pickle.load(open(user_index_path, 'rb'))
-    return user_index
-
 @csrf_exempt
-def rate_video_like(request, user_id, video_id):
-    model = load_model()
-    user_index = load_user_index()
-    video_index = load_video_index()
-    user = model.W[user_index[user_id]]
-    video = model.H[:, video_index[video_id]]
-    response = HttpResponse()
-    response.write({'like_rating': float(np.dot(user, video))})
-    return HttpResponse(response)
-
-@csrf_exempt
-def rate_video_like_list(request):
+def train_model(request):
+    User.objects.all().delete()
+    Video.objects.all().delete()
     body = json.loads(request.body)
-    model, user_index, index_user, video_index, index_video = load_files()
-    user = model.W[user_index[body['user_id']]]
-    videos = model.H[:, [video_index[v] for v in body['video_list']]]
-    M = np.dot(user, videos)
-    ans = {body['user_id']: [body['video_list'][x] for x in np.asarray(np.argsort(M)).squeeze()]}
+
+    #Like
+    bmf_like, bmf_like_fit, like_index_user, like_index_video = process_model(body['like'])
+    print('Like BMF fit, RSS: ',bmf_like_fit.distance())
+    for user_index, user_features in enumerate(bmf_like.W):
+        user, _ = User.objects.get_or_create(user_id=like_index_user[user_index])
+        user.user_features_like = np.asarray(user_features).squeeze().tolist()
+        user.save()
+    for video_index, video_features in enumerate(bmf_like.H.T):
+        video, _ = Video.objects.get_or_create(video_id=like_index_video[video_index])
+        video.video_features_like = np.asarray(video_features).squeeze().tolist()
+        video.save()
+
+    # dislike
+    bmf_dislike, bmf_dislike_fit, dislike_index_user, dislike_index_video = process_model(body['dislike'])
+    print('dislike BMF fit, RSS: ', bmf_dislike_fit.distance())
+    for user_index, user_features in enumerate(bmf_dislike.W):
+        user, _ = User.objects.get_or_create(user_id=dislike_index_user[user_index])
+        user.user_features_dislike = np.asarray(user_features).squeeze().tolist()
+    for video_index, video_features in enumerate(bmf_dislike.H.T):
+        user.save()
+        video, _ = Video.objects.get_or_create(video_id=dislike_index_video[video_index])
+        video.video_features_dislike = np.asarray(video_features).squeeze().tolist()
+        video.save()
+
+    # click
+    bmf_click, bmf_click_fit, click_index_user, click_index_video = process_model(body['click'])
+    print('click BMF fit, RSS: ', bmf_click_fit.distance())
+    for user_index, user_features in enumerate(bmf_click.W):
+        user, _ = User.objects.get_or_create(user_id=click_index_user[user_index])
+        user.user_features_click = np.asarray(user_features).squeeze().tolist()
+        user.save()
+    for video_index, video_features in enumerate(bmf_click.H.T):
+        video, _ = Video.objects.get_or_create(video_id=click_index_video[video_index])
+        video.video_features_click = np.asarray(video_features).squeeze().tolist()
+        video.save()
+
+    # watch
+    bmf_watch, bmf_watch_fit, watch_index_user, watch_index_video = process_model(body['watch'])
+    print('watch BMF fit, RSS: ', bmf_watch_fit.distance())
+    for user_index, user_features in enumerate(bmf_watch.W):
+        user, _ = User.objects.get_or_create(user_id=watch_index_user[user_index])
+        user.user_features_watch = np.asarray(user_features).squeeze().tolist()
+        user.save()
+    for video_index, video_features in enumerate(bmf_watch.H.T):
+        video, _ = Video.objects.get_or_create(video_id=watch_index_video[video_index])
+        video.video_features_watch = np.asarray(video_features).squeeze().tolist()
+        video.save()
+    print("Models saved")
+    return HttpResponse()
+
+def process_model(event_list):
+    data = np.matrix(event_list)
+    user_index, index_user = two_way_dictionaries(data[:, 0].tolist())
+    video_index, index_video = two_way_dictionaries(data[:, 1].tolist())
+    X = np.zeros((len(user_index), len(video_index)))
+    for user_id, video_id in event_list:
+        X[user_index[user_id], video_index[video_id]] = 1
+    bmf = nimfa.Bmf(X, rank=n_features)
+    bmf_fit = bmf()
+    return bmf, bmf_fit, index_user,  index_video
+
+@csrf_exempt
+def rate_video_list(request):
+    body = json.loads(request.body)
+    user = User.objects.get(user_id=body['user_id'])
+    video_list = [Video.objects.get(video_id=video_id) for video_id in body['video_list']]
+    like = np.matrix([video.video_features_like if video.video_features_like else np.zeros(n_features) for video in video_list])
+    dislike = np.matrix([video.video_features_dislike if video.video_features_dislike else np.zeros(n_features) for video in video_list])
+    click = np.matrix([video.video_features_click if video.video_features_click else np.zeros(n_features) for video in video_list])
+    watch = np.matrix([video.video_features_watch if video.video_features_watch else np.zeros(n_features) for video in video_list])
+
+    M_like = np.dot(user.user_features_like if user.user_features_like else np.zeros(n_features), like.T)
+    M_dislike = np.dot(user.user_features_dislike if user.user_features_dislike else np.zeros(n_features), dislike.T)
+    M_click = np.dot(user.user_features_click if user.user_features_click else np.zeros(n_features), click.T)
+    M_watch = np.dot(user.user_features_watch if user.user_features_watch else np.zeros(n_features), watch.T)
+
+    ans = {body['user_id']: [body['video_list'][x] for x in np.asarray(np.argsort(0.8 * M_like + 0.3 * M_click + 0.5 * M_watch - 0.8 * M_dislike)).squeeze()]}
     response = HttpResponse()
     response.write(ans)
     return response
-
-
-def test_rate_all(request):
-    model = load_model()
-    index_user = load_index_user()
-    index_video = load_index_video()
-    M = np.dot(model.W, model.H)
-    dicc = {int(index_user[u]): list(int(index_video[x]) for x in np.asarray(np.argsort(M[u, :])).squeeze()) for u in range(model.W.shape[0])}
-    response = HttpResponse()
-    response.write(dicc)
-    return response
-
-
-
-def train_model(request):
-    try:
-        data = np.genfromtxt('./recommendation_ms/data/ratings.csv', delimiter=',', skip_header=1)
-        user_index, index_user = two_way_dictionaries(data[:, 0])
-        video_index, index_video = two_way_dictionaries(data[:, 1])
-        X = np.zeros((len(user_index),len(video_index)))
-
-        for user_id, video_id, rating, _ in data:
-            X[user_index[user_id], video_index[video_id]] = rating.astype(float)
-
-        bmf_rating = nimfa.Bmf(X, rank=n_features)
-        bmf_fit = bmf_rating()
-        print("Model Fitted, RSS: ", bmf_fit.distance())
-
-        with open(model_path, 'wb') as model_file:
-            pickle.dump(bmf_rating, model_file)
-        print("Model serialized in "+model_path)
-
-        pickle.dump(index_user, open(index_user_path, 'wb'))
-        pickle.dump(user_index, open(user_index_path, 'wb'))
-        pickle.dump(index_video, open(index_video_path, 'wb'))
-        pickle.dump(video_index, open(video_index_path, 'wb'))
-        print("dictionaires serialized")
-
-        return HttpResponse("Modelo entrenado y guardado satisfactoriamente UwU")
-    except FileNotFoundError as e:
-        return HttpResponse("Error al cargar datos : "+str(e), status=500)
-    except Exception as e:
-        print(e)
-        return HttpResponse("Error al entrenar el modelo: "+str(e), status=500)
