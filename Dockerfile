@@ -4,9 +4,7 @@ FROM ubuntu
 ENV PYTHONUNBUFFERED=1
 RUN apt-get update
 RUN apt-get install -y git
-WORKDIR /code
+RUN apt install -y python3-pip
 RUN git clone https://github.com/CrowStream/recommendation-ms.git
-COPY requirements.txt /code/
+WORKDIR /recommendation-ms/
 RUN pip install -r requirements.txt
-COPY . /code/
-CMD python /recommendation/manage.py migrate
