@@ -20,6 +20,6 @@ from django.views.decorators.csrf import csrf_exempt
 
 urlpatterns = [
     path('recommendation/', include('recommendation_ms.urls')),
-    path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=True))),
+    #path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=True))),
     path('admin/', admin.site.urls),
 ]
