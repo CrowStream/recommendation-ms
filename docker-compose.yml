@@ -11,7 +11,7 @@ services:
       - POSTGRES_USER=${RECOMMENDATION_DB_USER}
       - POSTGRES_PASSWORD=${RECOMMENDATION_DB_PASSWORD}
     ports:
-      - "8005:8005"
+      - "5432:5432"
   recommendation_ms:
     image: crowstream2021/crowstream_recommendation_ms
     container_name: crowstream_recommendation_ms
