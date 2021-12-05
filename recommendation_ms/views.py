@@ -28,7 +28,7 @@ def train_model(request):
     Profile.objects.all().delete()
     Video.objects.all().delete()
     body = json.loads(request.body)
-
+    print(body['like'])
     #Like
     bmf_like, bmf_like_fit, like_index_profile, like_index_video = process_model(body['like'])
     print('Like BMF fit, RSS: ',bmf_like_fit.distance())
@@ -81,8 +81,9 @@ def train_model(request):
 
 def process_model(event_list):
     data = np.matrix(event_list)
+    print(data)
     profile_index, index_profile = two_way_dictionaries(data[:, 0].tolist())
-    video_index, index_video = two_way_dictionaries(data[:, 1].tolist())
+    video_index, index_video = two_way_dictionaries(data[:, 1].astype(int).tolist())
     X = np.zeros((len(profile_index), len(video_index)))
     for profile_id, video_id in event_list:
         X[profile_index[profile_id], video_index[video_id]] = 1
