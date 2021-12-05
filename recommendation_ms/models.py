@@ -11,7 +11,7 @@ class Profile(models.Model):
     profile_features_dislike = ArrayField(models.FloatField(), size=N_features, null=True)
 
 class Video(models.Model):
-    video_id = models.CharField(primary_key=True, max_length=40)
+    video_id = models.IntegerField(primary_key=True)
     video_features_watch = ArrayField(models.FloatField(), size=N_features, null=True)
     video_features_click = ArrayField(models.FloatField(), size=N_features, null=True)
     video_features_like = ArrayField(models.FloatField(), size=N_features, null=True)
