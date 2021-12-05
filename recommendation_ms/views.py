@@ -81,7 +81,6 @@ def train_model(request):
 
 def process_model(event_list):
     data = np.matrix(event_list)
-    print(data)
     profile_index, index_profile = two_way_dictionaries(data[:, 0].tolist())
     video_index, index_video = two_way_dictionaries(data[:, 1].astype(int).tolist())
     X = np.zeros((len(profile_index), len(video_index)))
