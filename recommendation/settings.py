@@ -31,7 +31,7 @@ ALLOWED_HOSTS = ['0.0.0.0', '104.155.130.109']
 # Application definition
 
 INSTALLED_APPS = [
-    'graphene_django',
+    #'graphene_django',
     'recommendation_ms',
     'django.contrib.postgres',
     'django.contrib.admin',
