@@ -7,4 +7,4 @@ RUN apt-get install -y git
 RUN apt install -y python3-pip
 RUN git clone https://github.com/CrowStream/recommendation-ms.git
 WORKDIR /recommendation-ms/
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txtls
