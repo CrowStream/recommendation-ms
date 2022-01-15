@@ -2,8 +2,8 @@
 import json
 import nimfa
 from django.http import HttpResponse, JsonResponse
-import pickle
 import numpy as np
+import random
 from pathlib import Path
 from django.views.decorators.csrf import csrf_exempt
 from .models import Profile, Video
@@ -93,20 +93,25 @@ def process_model(event_list):
 @csrf_exempt
 def rate_video_list(request):
     body = json.loads(request.body)
-    profile = Profile.objects.get(profile_id=body['profile_id'])
-    video_list = [Video.objects.get(video_id=video_id) for video_id in body['video_list']]
-    n_videos = body['n_videos']
-    like = np.matrix([video.video_features_like if video.video_features_like else np.zeros(n_features) for video in video_list])
-    dislike = np.matrix([video.video_features_dislike if video.video_features_dislike else np.zeros(n_features) for video in video_list])
-    click = np.matrix([video.video_features_click if video.video_features_click else np.zeros(n_features) for video in video_list])
-    watch = np.matrix([video.video_features_watch if video.video_features_watch else np.zeros(n_features) for video in video_list])
+    try:
+        profile = Profile.objects.get(profile_id=body['profile_id']);
+        video_list = [Video.objects.get(video_id=video_id) for video_id in body['video_list']]
+        n_videos = body['n_videos']
+        like = np.matrix([video.video_features_like if video.video_features_like else np.zeros(n_features) for video in video_list])
+        dislike = np.matrix([video.video_features_dislike if video.video_features_dislike else np.zeros(n_features) for video in video_list])
+        click = np.matrix([video.video_features_click if video.video_features_click else np.zeros(n_features) for video in video_list])
+        watch = np.matrix([video.video_features_watch if video.video_features_watch else np.zeros(n_features) for video in video_list])
 
-    M_like = np.dot(profile.profile_features_like if profile.profile_features_like else np.zeros(n_features), like.T)
-    M_dislike = np.dot(profile.profile_features_dislike if profile.profile_features_dislike else np.zeros(n_features), dislike.T)
-    M_click = np.dot(profile.profile_features_click if profile.profile_features_click else np.zeros(n_features), click.T)
-    M_watch = np.dot(profile.profile_features_watch if profile.profile_features_watch else np.zeros(n_features), watch.T)
+        M_like = np.dot(profile.profile_features_like if profile.profile_features_like else np.zeros(n_features), like.T)
+        M_dislike = np.dot(profile.profile_features_dislike if profile.profile_features_dislike else np.zeros(n_features), dislike.T)
+        M_click = np.dot(profile.profile_features_click if profile.profile_features_click else np.zeros(n_features), click.T)
+        M_watch = np.dot(profile.profile_features_watch if profile.profile_features_watch else np.zeros(n_features), watch.T)
 
-    ans = [body['video_list'][x] for x in np.asarray(np.argsort(0.8 * M_like + 0.3 * M_click + 0.5 * M_watch - 0.8 * M_dislike)).squeeze()]
-    #response = HttpResponse(ans)
-    #response.write({"videoList": ans})
-    return JsonResponse({"videos": ans[:n_videos]})
+        ans = [body['video_list'][x] for x in np.asarray(np.argsort(0.8 * M_like + 0.3 * M_click + 0.5 * M_watch - 0.8 * M_dislike)).squeeze()]
+        #response = HttpResponse(ans)
+        #response.write({"videoList": ans})
+        return JsonResponse({"videos": ans[:n_videos]})
+    except:
+        video_list = body['video_list']
+        random.shuffle(video_list)
+        return JsonResponse({"videos": video_list})
