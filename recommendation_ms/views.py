@@ -93,10 +93,10 @@ def process_model(event_list):
 @csrf_exempt
 def rate_video_list(request):
     body = json.loads(request.body)
+    n_videos = body['n_videos']
     try:
         profile = Profile.objects.get(profile_id=body['profile_id']);
         video_list = [Video.objects.get(video_id=video_id) for video_id in body['video_list']]
-        n_videos = body['n_videos']
         like = np.matrix([video.video_features_like if video.video_features_like else np.zeros(n_features) for video in video_list])
         dislike = np.matrix([video.video_features_dislike if video.video_features_dislike else np.zeros(n_features) for video in video_list])
         click = np.matrix([video.video_features_click if video.video_features_click else np.zeros(n_features) for video in video_list])
@@ -114,4 +114,4 @@ def rate_video_list(request):
     except:
         video_list = body['video_list']
         random.shuffle(video_list)
-        return JsonResponse({"videos": video_list})
+        return JsonResponse({"videos": video_list[:n_videos]})
