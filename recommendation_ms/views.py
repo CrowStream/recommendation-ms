@@ -16,7 +16,7 @@ path = "./recommendation_ms/data/"
 n_features = 30
 
 def index(request):
-    return HttpResponse("Hello World xdxd this is recommendation system's index!")
+    return HttpResponse("Hello World! this is recommendation system's index!")
 
 def two_way_dictionaries(array):
     forward = {v: i for i, v in enumerate(np.unique(array))}
